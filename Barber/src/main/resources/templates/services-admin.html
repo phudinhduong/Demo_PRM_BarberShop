@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8"/>
+    <title>Quản lý Services (Owner)</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <style>
+        body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;color:#222}
+        h1{font-size:20px;margin:0 0 12px}
+        .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+        input[type=text],input[type=number]{padding:8px;border:1px solid #ccc;border-radius:8px}
+        input[type=checkbox]{transform:scale(1.1)}
+        button{padding:8px 12px;border:0;border-radius:8px;background:#0a7; color:#fff; cursor:pointer}
+        button.secondary{background:#777}
+        button.warn{background:#d33}
+        table{width:100%;border-collapse:collapse;margin-top:12px}
+        th,td{padding:8px 10px;border-bottom:1px solid #eee;text-align:left;vertical-align:middle}
+        tr:hover{background:#f9f9f9}
+        .badge{padding:2px 8px;border-radius:999px;font-size:12px}
+        .on{background:#e8fff2;color:#06764f;border:1px solid #b8f0d3}
+        .off{background:#fff3f0;color:#a63921;border:1px solid #ffd5c9}
+        #status{margin-top:10px;font-size:13px;color:#555}
+        .card{border:1px solid #eee;border-radius:12px;padding:12px}
+        .grid{display:grid;grid-template-columns:repeat(6, minmax(120px,1fr));gap:8px}
+        @media (max-width:800px){ .grid{grid-template-columns:1fr 1fr} }
+    </style>
+</head>
+<body>
+<h1>Quản lý Services (Owner)</h1>
+
+<div class="card">
+    <div class="row">
+        <label>API Base:</label>
+        <input id="base" type="text" value="http://localhost:8080/api" style="min-width:320px"/>
+        <label>Bearer Token:</label>
+        <input id="token" type="text" placeholder="Dán OWNER JWT vào đây" style="min-width:360px"/>
+        <button id="btnLoad">Tải danh sách</button>
+    </div>
+
+    <div class="grid">
+        <input id="name" type="text" placeholder="Tên dịch vụ (vd: Cắt tóc nam)"/>
+        <input id="duration" type="number" min="1" placeholder="Thời lượng (phút)"/>
+        <input id="price" type="number" min="0" placeholder="Giá (VND)"/>
+        <label style="display:flex;align-items:center;gap:6px">
+            <input id="active" type="checkbox" checked/> Hoạt động
+        </label>
+        <button id="btnAdd">+ Thêm mới</button>
+        <button id="btnClear" class="secondary">Xóa form</button>
+    </div>
+
+    <div id="status">Sẵn sàng.</div>
+</div>
+
+<table id="tbl">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Tên</th>
+        <th>Phút</th>
+        <th>Giá</th>
+        <th>Trạng thái</th>
+        <th style="width:200px">Thao tác</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+    const $ = (id)=>document.getElementById(id);
+    const state = { editingId: null };
+
+    function hdr() {
+        const t = $("token").value.trim();
+        return t ? { "Authorization": "Bearer " + t, "Content-Type":"application/json" }
+            : { "Content-Type":"application/json" };
+    }
+    function base(path){ return $("base").value.replace(/\/+$/,'') + path; }
+    function say(m){ $("status").textContent = m; }
+
+    async function load() {
+        try {
+            say("Đang tải danh sách...");
+            const res = await fetch(base("/owner/services"), { headers: hdr() });
+            const txt = await res.text();
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${txt}`);
+            const arr = JSON.parse(txt);
+            render(arr);
+            say(`Đã tải ${arr.length} dịch vụ.`);
+        } catch(e){ say("Lỗi: " + e.message); }
+    }
+
+    function render(arr){
+        const tb = $("tbl").querySelector("tbody");
+        tb.innerHTML = "";
+        arr.forEach(s => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+      <td>${s.id}</td>
+      <td>${escapeHtml(s.name)}</td>
+      <td>${s.durationMin ?? ""}</td>
+      <td>${s.price?.toLocaleString?.('vi-VN') ?? s.price}đ</td>
+      <td>${s.isActive ? '<span class="badge on">Hoạt động</span>' : '<span class="badge off">Tạm tắt</span>'}</td>
+      <td>
+        <button class="secondary" data-act="edit" data-id="${s.id}">Sửa</button>
+        <button class="secondary" data-act="toggle" data-id="${s.id}" data-on="${s.isActive}">${s.isActive?'Tắt':'Bật'}</button>
+        <button class="warn" data-act="del" data-id="${s.id}">Xóa</button>
+      </td>`;
+            tb.appendChild(tr);
+        });
+
+        tb.querySelectorAll("button").forEach(btn=>{
+            const id = +btn.dataset.id;
+            const act = btn.dataset.act;
+            if (act==="edit") btn.onclick = ()=> editService(id);
+            if (act==="toggle") btn.onclick = ()=> toggleActive(id, btn.dataset.on !== "true");
+            if (act==="del") btn.onclick = ()=> delService(id);
+        });
+    }
+
+    function readForm(){
+        const name = $("name").value.trim();
+        const duration = parseInt($("duration").value, 10);
+        const price = parseInt($("price").value, 10);
+        const isActive = $("active").checked;
+        if (!name) throw new Error("Nhập tên dịch vụ");
+        if (!Number.isFinite(duration) || duration<=0) throw new Error("Thời lượng không hợp lệ");
+        if (!Number.isFinite(price) || price<0) throw new Error("Giá không hợp lệ");
+        return { name, durationMin: duration, price, isActive };
+    }
+
+    async function addService(){
+        try {
+            const body = readForm();
+            say("Đang thêm...");
+            const res = await fetch(base("/owner/services"), {
+                method:"POST", headers: hdr(), body: JSON.stringify(body)
+            });
+            const txt = await res.text();
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${txt}`);
+            clearForm(); await load(); say("Đã thêm dịch vụ.");
+        } catch(e){ say("Lỗi: " + e.message); }
+    }
+
+    function fillForm(s){
+        $("name").value = s.name ?? "";
+        $("duration").value = s.durationMin ?? "";
+        $("price").value = s.price ?? "";
+        $("active").checked = !!s.isActive;
+    }
+
+    async function editService(id){
+        // Lấy dòng hiện tại để đổ form
+        const row = [...$("tbl").querySelectorAll("tbody tr")].find(tr=>+tr.children[0].textContent===id);
+        if (!row){ say("Không tìm thấy bản ghi"); return; }
+        // parse nhanh từ dòng (hoặc call GET all rồi map)
+        $("name").value = row.children[1].textContent.trim();
+        $("duration").value = row.children[2].textContent.trim();
+        $("price").value = row.children[3].textContent.replace(/[^\d]/g,'');
+        $("active").checked = row.children[4].textContent.includes("Hoạt động");
+        state.editingId = id; say("Đang sửa ID #" + id);
+        $("btnAdd").textContent = "Lưu cập nhật";
+    }
+
+    async function saveEdit(){
+        try{
+            const id = state.editingId;
+            if (!id){ await addService(); return; }
+            const body = readForm();
+            say("Đang cập nhật...");
+            const res = await fetch(base(`/owner/services/${id}`), {
+                method:"PUT", headers: hdr(), body: JSON.stringify(body)
+            });
+            const txt = await res.text();
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${txt}`);
+            state.editingId = null;
+            $("btnAdd").textContent = "+ Thêm mới";
+            clearForm(); await load(); say("Đã cập nhật.");
+        }catch(e){ say("Lỗi: " + e.message); }
+    }
+
+    async function toggleActive(id, turnOn){
+        try{
+            say("Đang cập nhật trạng thái...");
+            const res = await fetch(base(`/owner/services/${id}`), {
+                method:"PUT", headers: hdr(),
+                body: JSON.stringify({ isActive: !!turnOn })
+            });
+            const txt = await res.text();
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${txt}`);
+            await load(); say("Đã đổi trạng thái.");
+        }catch(e){ say("Lỗi: " + e.message); }
+    }
+
+    async function delService(id){
+        if (!confirm(`Xóa service #${id}?`)) return;
+        try{
+            say("Đang xóa...");
+            const res = await fetch(base(`/owner/services/${id}`), {
+                method:"DELETE", headers: hdr()
+            });
+            const txt = await res.text();
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${txt}`);
+            await load(); say("Đã xóa.");
+        }catch(e){ say("Lỗi: " + e.message); }
+    }
+
+    function clearForm(){
+        $("name").value = "";
+        $("duration").value = "";
+        $("price").value = "";
+        $("active").checked = true;
+        state.editingId = null;
+        $("btnAdd").textContent = "+ Thêm mới";
+    }
+
+    function escapeHtml(s){ return (s??"").replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    // events
+    $("btnLoad").onclick = load;
+    $("btnAdd").onclick  = saveEdit;
+    $("btnClear").onclick= clearForm;
+
+    // tip: tự load nếu đã có token
+</script>
+</body>
+</html>

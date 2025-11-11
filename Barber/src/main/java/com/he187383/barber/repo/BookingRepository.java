@@ -41,4 +41,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findBarberBookingsOnDay(@Param("bid") Long barberId,
                                           @Param("from") java.time.LocalDateTime from,
                                           @Param("to")   java.time.LocalDateTime to);
+
+    @Query("""
+    select b from Booking b
+      join fetch b.service s
+      join fetch b.barber br
+      left join fetch br.user bu
+      join fetch b.user u
+    where (:fromDt is null or b.startDt >= :fromDt)
+      and (:toDt   is null or b.startDt <  :toDt)
+    order by b.startDt desc
+  """)
+    List<Booking> findAllEager(
+            @Param("fromDt") java.time.LocalDateTime fromDt,
+            @Param("toDt")   java.time.LocalDateTime toDt
+    );
 }

@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <title>Owner Admin – Services / Barbers / Bookings</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <style>
+    :root{--pri:#0a7}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;color:#222}
+    h1{font-size:20px;margin:0 0 12px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+    input[type=text],input[type=number],input[type=date]{padding:8px;border:1px solid #ccc;border-radius:8px}
+    input[type=checkbox]{transform:scale(1.1)}
+    button{padding:8px 12px;border:0;border-radius:8px;background:var(--pri); color:#fff; cursor:pointer}
+    button.secondary{background:#777}
+    button.warn{background:#d33}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:8px 10px;border-bottom:1px solid #eee;text-align:left;vertical-align:middle}
+    tr:hover{background:#f9f9f9}
+    .badge{padding:2px 8px;border-radius:999px;font-size:12px}
+    .on{background:#e8fff2;color:#06764f;border:1px solid #b8f0d3}
+    .off{background:#fff3f0;color:#a63921;border:1px solid #ffd5c9}
+    .card{border:1px solid #eee;border-radius:12px;padding:12px;margin-bottom:16px}
+    .tabs{display:flex;gap:8px;margin:12px 0}
+    .tab{padding:8px 12px;border-radius:999px;background:#eee;color:#333;cursor:pointer}
+    .tab.active{background:var(--pri);color:#fff}
+    .hide{display:none}
+    .grid{display:grid;grid-template-columns:repeat(6, minmax(120px,1fr));gap:8px}
+    @media (max-width:900px){ .grid{grid-template-columns:1fr 1fr} }
+    #status{font-size:13px;color:#555}
+    .muted{font-size:12px;color:#666}
+    .right{float:right}
+  </style>
+</head>
+<body>
+  <h1>Owner Admin</h1>
+
+  <!-- Header -->
+  <div class="card">
+    <div class="row">
+      <label>API Base:</label>
+      <input id="base" type="text" style="min-width:320px"/>
+      <span class="muted">Token tự lấy từ localStorage</span>
+      <button id="btnPing" class="secondary">Kiểm tra kết nối</button>
+      <span id="status"></span>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-t="svc">Services</div>
+      <div class="tab" data-t="barber">Barbers</div>
+      <div class="tab" data-t="book">Bookings</div>
+    </div>
+  </div>
+
+  <!-- Services -->
+  <section id="sec-svc" class="card">
+    <h3>Quản lý Services</h3>
+    <div class="grid">
+      <input id="svc-name" type="text" placeholder="Tên dịch vụ"/>
+      <input id="svc-duration" type="number" min="1" placeholder="Thời lượng (phút)"/>
+      <input id="svc-price" type="number" min="0" placeholder="Giá (VND)"/>
+      <label style="display:flex;align-items:center;gap:6px">
+        <input id="svc-active" type="checkbox" checked/> Hoạt động
+      </label>
+      <button id="svc-save">+ Thêm mới</button>
+      <button id="svc-clear" class="secondary">Xóa form</button>
+    </div>
+    <table id="tbl-svc">
+      <thead><tr>
+        <th>ID</th><th>Tên</th><th>Phút</th><th>Giá</th><th>Trạng thái</th><th style="width:220px">Thao tác</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- Barbers -->
+  <section id="sec-barber" class="card hide">
+    <h3>Quản lý Barbers</h3>
+    <div class="grid">
+      <input id="br-name" type="text" placeholder="Tên thợ"/>
+      <input id="br-bio" type="text" placeholder="Mô tả ngắn (bio)"/>
+      <label style="display:flex;align-items:center;gap:6px">
+        <input id="br-active" type="checkbox" checked/> Hoạt động
+      </label>
+      <button id="br-save">+ Thêm mới</button>
+      <button id="br-clear" class="secondary">Xóa form</button>
+      <span class="muted" style="grid-column: 1 / -1">* Số điện thoại hiển thị lấy từ User gắn với Barber (read-only).</span>
+    </div>
+    <table id="tbl-barber">
+      <thead><tr>
+        <th>ID</th><th>Tên</th><th>Phone</th><th>Bio</th><th>Trạng thái</th><th style="width:220px">Thao tác</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- Bookings -->
+  <section id="sec-book" class="card hide">
+    <h3>Danh sách Bookings</h3>
+    <div class="row">
+      <label>Từ ngày</label><input id="bk-from" type="date"/>
+      <label>Đến ngày</label><input id="bk-to" type="date"/>
+      <button id="bk-load">Tải bookings</button>
+      <span class="muted">* Nếu backend khác query (vd <code>dateFrom/dateTo</code>) hãy sửa hàm <code>loadBookings()</code>.</span>
+    </div>
+    <table id="tbl-book">
+      <thead><tr>
+        <th>ID</th><th>Thời gian</th><th>Dịch vụ</th><th>Thợ</th><th>Khách</th><th>Giá</th><th>Trạng thái</th><th>Thanh toán</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+<script>
+const $ = (id)=>document.getElementById(id);
+const S = { svcEditing: null, brEditing: null };
+
+// ===== common =====
+function hdr(){
+  const token = localStorage.getItem("barber_token") || "";
+  if (!token) throw new Error("Không tìm thấy token trong localStorage. Hãy đăng nhập lại.");
+  return { "Authorization": "Bearer " + token, "Content-Type": "application/json" };
+}
+function base(path){ return ($("base").value || "").replace(/\/+$/,'') + path; }
+function say(m){ $("status").textContent = m || ""; }
+function money(v){ try { return Number(v).toLocaleString('vi-VN') + "đ"; } catch(e){ return v + "đ"; } }
+function esc(s){ return (s??"").toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function get(obj, path, dflt=""){ try{ return path.split('.').reduce((o,k)=>o?.[k], obj) ?? dflt; }catch(e){ return dflt; } }
+
+// ===== tabs =====
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick = ()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    const key = t.dataset.t;
+    document.querySelectorAll("section").forEach(sec=>sec.classList.add("hide"));
+    if (key==="svc") $("sec-svc").classList.remove("hide");
+    if (key==="barber") $("sec-barber").classList.remove("hide");
+    if (key==="book") $("sec-book").classList.remove("hide");
+  };
+});
+
+// ===== init base/token, pick today-range for bookings =====
+(function init(){
+  const savedBase = localStorage.getItem("barber_base") || "http://localhost:8080/api";
+  $("base").value = savedBase;
+
+  const today = new Date();
+  const ymd = (d)=>d.toISOString().slice(0,10);
+  const from = new Date(today); from.setDate(today.getDate()-7);
+  $("bk-from").value = ymd(from);
+  $("bk-to").value = ymd(today);
+
+  // load default lists
+  loadServices().catch(e=>say(e.message));
+  loadBarbers().catch(e=>say(e.message));
+})();
+
+$("btnPing").onclick = async ()=>{
+  try{
+    say("Ping...");
+    const r = await fetch(base("/services")); // public endpoint
+    say(r.ok ? "OK" : `HTTP ${r.status}`);
+  }catch(e){ say("Lỗi: " + e.message); }
+};
+
+// ==================== SERVICES ====================
+async function loadServices(){
+  say("Đang tải services...");
+  const r = await fetch(base("/owner/services"), { headers: hdr() });
+  const txt = await r.text();
+  if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+  const arr = JSON.parse(txt || "[]");
+  renderServices(arr);
+  say(`Services: ${arr.length}`);
+}
+function renderServices(arr){
+  const tb = $("tbl-svc").querySelector("tbody"); tb.innerHTML="";
+  arr.forEach(s=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${s.id}</td>
+      <td>${esc(s.name)}</td>
+      <td>${s.durationMin ?? ""}</td>
+      <td>${money(s.price)}</td>
+      <td>${s.isActive ? '<span class="badge on">Hoạt động</span>' : '<span class="badge off">Tạm tắt</span>'}</td>
+      <td>
+        <button class="secondary" data-act="edit" data-id="${s.id}">Sửa</button>
+        <button class="secondary" data-act="toggle" data-id="${s.id}" data-on="${s.isActive}">${s.isActive?'Tắt':'Bật'}</button>
+        <button class="warn" data-act="del" data-id="${s.id}">Xóa</button>
+      </td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll("button").forEach(btn=>{
+    const id = +btn.dataset.id, act = btn.dataset.act;
+    if (act==="edit")   btn.onclick = ()=> svcEditRow(id);
+    if (act==="toggle") btn.onclick = ()=> svcToggle(id, btn.dataset.on !== "true");
+    if (act==="del")    btn.onclick = ()=> svcDel(id);
+  });
+}
+function svcReadForm(){
+  const name = $("svc-name").value.trim();
+  const duration = parseInt($("svc-duration").value, 10);
+  const price = parseInt($("svc-price").value, 10);
+  const isActive = $("svc-active").checked;
+  if (!name) throw new Error("Nhập tên dịch vụ");
+  if (!Number.isFinite(duration) || duration<=0) throw new Error("Thời lượng không hợp lệ");
+  if (!Number.isFinite(price) || price<0) throw new Error("Giá không hợp lệ");
+  return { name, durationMin: duration, price, isActive };
+}
+$("svc-clear").onclick = ()=>{ S.svcEditing=null; $("svc-name").value=""; $("svc-duration").value=""; $("svc-price").value=""; $("svc-active").checked=true; $("svc-save").textContent="+ Thêm mới"; };
+$("svc-save").onclick = async ()=>{
+  try{
+    const body = svcReadForm();
+    if (!S.svcEditing){
+      say("Thêm service...");
+      const r = await fetch(base("/owner/services"), { method:"POST", headers: hdr(), body: JSON.stringify(body) });
+      const txt = await r.text(); if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+    } else {
+      say("Cập nhật service...");
+      const r = await fetch(base(`/owner/services/${S.svcEditing}`), { method:"PUT", headers: hdr(), body: JSON.stringify(body) });
+      const txt = await r.text(); if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+      S.svcEditing = null; $("svc-save").textContent="+ Thêm mới";
+    }
+    $("svc-clear").click(); await loadServices();
+  }catch(e){ say("Lỗi: " + e.message); }
+};
+function svcEditRow(id){
+  const row = [...$("tbl-svc").querySelectorAll("tbody tr")].find(tr=>+tr.children[0].textContent===id);
+  if (!row){ say("Không tìm thấy bản ghi"); return; }
+  $("svc-name").value = row.children[1].textContent.trim();
+  $("svc-duration").value = row.children[2].textContent.trim();
+  $("svc-price").value = row.children[3].textContent.replace(/[^\d]/g,'');
+  $("svc-active").checked = row.children[4].textContent.includes("Hoạt động");
+  S.svcEditing = id; $("svc-save").textContent = "Lưu cập nhật";
+}
+async function svcToggle(id, turnOn){
+  try{
+    say("Đổi trạng thái...");
+    const r = await fetch(base(`/owner/services/${id}`), { method:"PUT", headers: hdr(), body: JSON.stringify({ isActive: !!turnOn }) });
+    const txt = await r.text(); if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+    await loadServices();
+  }catch(e){ say("Lỗi: " + e.message); }
+}
+async function svcDel(id){
+  if (!confirm(`Xóa service #${id}?`)) return;
+  try{
+    say("Xóa...");
+    const r = await fetch(base(`/owner/services/${id}`), { method:"DELETE", headers: hdr() });
+    const txt = await r.text(); if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+    await loadServices();
+  }catch(e){ say("Lỗi: " + e.message); }
+}
+
+// ==================== BARBERS ====================
+async function loadBarbers(){
+  say("Đang tải barbers...");
+  const r = await fetch(base("/owner/barbers"), { headers: hdr() });
+  const txt = await r.text();
+  if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+  const arr = JSON.parse(txt || "[]");
+  renderBarbers(arr);
+  say(`Barbers: ${arr.length}`);
+}
+function renderBarbers(arr){
+  const tb = $("tbl-barber").querySelector("tbody"); tb.innerHTML="";
+  arr.forEach(b=>{
+    const phone = get(b, "user.phone", "");
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${b.id}</td>
+      <td>${esc(b.name)}</td>
+      <td>${esc(phone||"")}</td>
+      <td>${esc(b.bio||"")}</td>
+      <td>${b.isActive ? '<span class="badge on">Hoạt động</span>' : '<span class="badge off">Tạm tắt</span>'}</td>
+      <td>
+        <button class="secondary" data-act="edit" data-id="${b.id}">Sửa</button>
+        <button class="secondary" data-act="toggle" data-id="${b.id}" data-on="${b.isActive}">${b.isActive?'Tắt':'Bật'}</button>
+        <button class="warn" data-act="del" data-id="${b.id}">Xóa</button>
+      </td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll("button").forEach(btn=>{
+    const id = +btn.dataset.id, act = btn.dataset.act;
+    if (act==="edit")   btn.onclick = ()=> brEditRow(id);
+    if (act==="toggle") btn.onclick = ()=> brToggle(id, btn.dataset.on !== "true");
+    if (act==="del")    btn.onclick = ()=> brDel(id);
+  });
+}
+$("br-clear").onclick = ()=>{ S.brEditing=null; $("br-name").value=""; $("br-bio").value=""; $("br-active").checked=true; $("br-save").textContent="+ Thêm mới"; };
+$("br-save").onclick = async ()=>{
+  try{
+    const body = { name: $("br-name").value.trim(), bio: $("br-bio").value.trim(), isActive: $("br-active").checked };
+    if (!body.name) throw new Error("Nhập tên thợ");
+    if (!S.brEditing){
+      say("Thêm barber...");
+      const r = await fetch(base("/owner/barbers"), { method:"POST", headers: hdr(), body: JSON.stringify(body) });
+      const txt = await r.text(); if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+    } else {
+      say("Cập nhật barber...");
+      const r = await fetch(base(`/owner/barbers/${S.brEditing}`), { method:"PUT", headers: hdr(), body: JSON.stringify(body) });
+      const txt = await r.text(); if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+      S.brEditing = null; $("br-save").textContent="+ Thêm mới";
+    }
+    $("br-clear").click(); await loadBarbers();
+  }catch(e){ say("Lỗi: " + e.message); }
+};
+function brEditRow(id){
+  const row = [...$("tbl-barber").querySelectorAll("tbody tr")].find(tr=>+tr.children[0].textContent===id);
+  if (!row){ say("Không tìm thấy bản ghi"); return; }
+  $("br-name").value = row.children[1].textContent.trim();
+  $("br-bio").value = row.children[3].textContent.trim();
+  $("br-active").checked = row.children[4].textContent.includes("Hoạt động");
+  S.brEditing = id; $("br-save").textContent = "Lưu cập nhật";
+}
+async function brToggle(id, turnOn){
+  try{
+    say("Đổi trạng thái...");
+    const r = await fetch(base(`/owner/barbers/${id}`), { method:"PUT", headers: hdr(), body: JSON.stringify({ isActive: !!turnOn }) });
+    const txt = await r.text(); if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+    await loadBarbers();
+  }catch(e){ say("Lỗi: " + e.message); }
+}
+async function brDel(id){
+  if (!confirm(`Xóa barber #${id}?`)) return;
+  try{
+    say("Xóa...");
+    const r = await fetch(base(`/owner/barbers/${id}`), { method:"DELETE", headers: hdr() });
+    const txt = await r.text(); if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+    await loadBarbers();
+  }catch(e){ say("Lỗi: " + e.message); }
+}
+
+// ==================== BOOKINGS (READ-ONLY) ====================
+$("bk-load").onclick = ()=>loadBookings().catch(e=>say(e.message));
+
+async function loadBookings(){
+  say("Đang tải bookings...");
+  // Giả định endpoint: GET /api/owner/bookings[?from=yyyy-MM-dd&to=yyyy-MM-dd]
+  const url = new URL(base("/owner/bookings"));
+  const f = $("bk-from").value, t = $("bk-to").value;
+  if (f) url.searchParams.set("from", f);
+  if (t) url.searchParams.set("to", t);
+
+  const r = await fetch(url.toString(), { headers: hdr() });
+  const txt = await r.text();
+  if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+  const arr = JSON.parse(txt || "[]");
+  renderBookings(arr);
+  say(`Bookings: ${arr.length}`);
+}
+function renderBookings(arr){
+  const tb = $("tbl-book").querySelector("tbody"); tb.innerHTML="";
+  arr.forEach(b=>{
+    const id = b.id;
+    const start = b.startDt || b.start || "";
+    const end   = b.endDt   || b.end   || "";
+    const svc   = get(b, "service.name", b.serviceName||"");
+    const barber= get(b, "barber.name", b.barberName||"");
+    const cust  = b.customerName || get(b,"user.name",""); // fallback MyBookingRes/owner dto
+    const phone = b.customerPhone || get(b,"user.phone","");
+    const price = b.price;
+    const status= b.status;
+    const pay   = b.payMethod || b.pay || "";
+    const time  = fmtRange(start,end);
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${id}</td>
+      <td>${esc(time)}</td>
+      <td>${esc(svc||"")}</td>
+      <td>${esc(barber||"")}</td>
+      <td>${esc(cust||"")}${phone?(" • "+esc(phone)):""}</td>
+      <td>${money(price)}</td>
+      <td>${esc(status||"")}</td>
+      <td>${esc(pay||"")}</td>`;
+    tb.appendChild(tr);
+  });
+}
+function fmtRange(s,e){
+  try{
+    const hhmm = (x)=>x && x.length>=16 ? x.substring(11,16) : x;
+    const dmy  = (x)=>x?.slice(8,10)+"/"+x?.slice(5,7);
+    return `${dmy(s)} ${hhmm(s)}–${hhmm(e)}`;
+  }catch(_){ return `${s}–${e}`; }
+}
+</script>
+</body>
+</html>

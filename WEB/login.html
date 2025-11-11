@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<title>Đăng nhập Owner</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+  :root{--pri:#0a7}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;display:grid;place-items:center;height:100vh;margin:0;background:#f7f7f7;color:#222}
+  .card{width:min(420px,92vw);background:#fff;border:1px solid #eee;border-radius:14px;padding:20px;box-shadow:0 10px 20px rgba(0,0,0,.06)}
+  h1{font-size:18px;margin:0 0 12px}
+  .row{display:flex;gap:8px;align-items:center;margin:10px 0}
+  label{display:block;font-size:13px;margin-bottom:6px;color:#555}
+  input{width:100%;padding:10px;border:1px solid #ccc;border-radius:10px;font-size:14px}
+  .grid{display:grid;grid-template-columns:1fr;gap:10px}
+  button{width:100%;padding:11px;border:0;border-radius:10px;background:var(--pri);color:#fff;font-weight:600;cursor:pointer}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .muted{font-size:12px;color:#666;margin-top:8px}
+  #status{font-size:13px;margin-top:8px;min-height:18px}
+  .err{color:#b3261e}
+  .ok{color:#066a4f}
+  .row-inline{display:flex;gap:8px}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Đăng nhập Owner</h1>
+
+    <div class="grid">
+      <div>
+        <label>API Base</label>
+        <input id="base" type="text" placeholder="https://api.yourdomain.com/api"
+               value="http://localhost:8080/api">
+      </div>
+      <div>
+        <label>Email</label>
+        <input id="email" type="email" placeholder="owner@email.com">
+      </div>
+      <div>
+        <label>Mật khẩu</label>
+        <div class="row-inline">
+          <input id="password" type="password" placeholder="••••••••">
+          <button type="button" id="toggle" style="width:auto;padding:0 10px;background:#777">Hiện</button>
+        </div>
+      </div>
+      <button id="btnLogin">Đăng nhập</button>
+      <div id="status" class="muted"></div>
+      <div class="muted">Nếu đăng nhập thành công, bạn sẽ được chuyển tới <b>services-admin.html</b>.</div>
+    </div>
+  </div>
+
+<script>
+const $ = id => document.getElementById(id);
+$("toggle").onclick = () => {
+  const pw = $("password");
+  const on = pw.type === "password";
+  pw.type = on ? "text" : "password";
+  $("toggle").textContent = on ? "Ẩn" : "Hiện";
+};
+
+$("btnLogin").onclick = login;
+$("password").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
+$("email").addEventListener("keydown", e => { if (e.key === "Enter") $("password").focus(); });
+
+// nhớ API base lần trước
+const savedBase = localStorage.getItem("barber_base");
+if (savedBase) $("base").value = savedBase;
+
+async function login(){
+  const base = $("base").value.trim().replace(/\/+$/,'');
+  const email = $("email").value.trim();
+  const pass  = $("password").value;
+  if (!base){ setStatus("Hãy nhập API Base", true); return; }
+  if (!email || !pass){ setStatus("Nhập email và mật khẩu", true); return; }
+
+  setBusy(true); setStatus("Đang đăng nhập…");
+  try{
+    const r = await fetch(base + "/auth/login", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({email, password: pass})
+    });
+    const txt = await r.text();
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+    const res = JSON.parse(txt || "{}");
+
+    const token = res.token || "";
+    const role  = (res.user && res.user.role) ? String(res.user.role) : "";
+    if (!token){ throw new Error("Không nhận được token"); }
+    if (role !== "OWNER"){ throw new Error("Bạn không phải OWNER"); }
+
+    // lưu localStorage để các trang khác dùng luôn
+    localStorage.setItem("barber_token", token);
+    localStorage.setItem("barber_role", role);
+    localStorage.setItem("barber_email", email);
+    localStorage.setItem("barber_base", base);
+
+    setStatus("Đăng nhập thành công", false);
+    // chuyển sang trang quản trị services (nếu có)
+    setTimeout(() => {
+      window.location.href = "services-admin.html"; // đổi nếu bạn dùng tên khác
+    }, 500);
+  }catch(e){
+    setStatus(e.message || "Lỗi không xác định", true);
+  }finally{
+    setBusy(false);
+  }
+}
+
+function setBusy(on){
+  $("btnLogin").disabled = on;
+}
+function setStatus(msg, isErr=false){
+  const el = $("status");
+  el.textContent = msg || "";
+  el.className = isErr ? "err" : "ok";
+}
+</script>
+</body>
+</html>

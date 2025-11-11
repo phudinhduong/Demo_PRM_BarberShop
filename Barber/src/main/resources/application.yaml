@@ -21,6 +21,7 @@ spring:
 
 server:
   port: 8080
+  forward-headers-strategy: framework
 
 app:
   jwt:
@@ -46,3 +47,5 @@ vnpay:
   secretKey: TE4T7PVR02J9OBW21L5R6RIC1N7IVVVO
   payUrl: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
   returnUrl: http://10.0.2.2:8080/api/payment/vnpay-return
+
+

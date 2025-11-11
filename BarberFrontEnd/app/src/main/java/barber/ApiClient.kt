@@ -16,7 +16,9 @@ object ApiClient {
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
+    private const val BASEDEPLOY = "https://mireya-incogitable-enzoutically.ngrok-free.dev/api"
     private const val BASE = "http://10.0.2.2:8080/api"
+    private const val BASELOCAL = "http://10.0.2.2:8080/api"
     private val JSON = "application/json; charset=utf-8".toMediaType()
 
     @JvmStatic
