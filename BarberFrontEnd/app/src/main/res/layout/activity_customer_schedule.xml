@@ -1,0 +1,50 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:padding="12dp"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <TextView
+        android:text="Xem lịch làm việc"
+        android:textStyle="bold"
+        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+    <EditText
+        android:id="@+id/etDate"
+        android:hint="Ngày (yyyy-MM-dd)"
+        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+    <TextView
+        android:text="Lọc theo thợ (tuỳ chọn)"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"/>
+    <Spinner
+        android:id="@+id/spBarber"
+        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@+id/btnLoad"
+        android:text="Xem lịch"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"/>
+
+    <TextView android:text="Sáng (08:00–12:00)"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"/>
+    <ListView
+        android:id="@+id/listMorning"
+        android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <TextView android:text="Chiều (13:30–17:00)"
+        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    <ListView
+        android:id="@+id/listAfternoon"
+        android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <TextView android:text="Tối (18:00–21:00)"
+        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    <ListView
+        android:id="@+id/listEvening"
+        android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1"/>
+</LinearLayout>

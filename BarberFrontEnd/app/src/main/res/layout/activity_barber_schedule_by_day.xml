@@ -1,0 +1,57 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout
+        android:orientation="vertical" android:padding="12dp"
+        android:layout_width="match_parent" android:layout_height="wrap_content">
+
+        <TextView
+            android:text="Xem lịch theo ngày (Barber)"
+            android:textStyle="bold"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp">
+            <EditText
+                android:id="@+id/etDate"
+                android:hint="yyyy-MM-dd"
+                android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="wrap_content"/>
+            <Button
+                android:id="@+id/btnPick"
+                android:text="Chọn ngày"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"/>
+            <Button
+                android:id="@+id/btnLoad"
+                android:text="Xem"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+
+        <TextView android:text="Ca làm" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
+
+        <ListView
+            android:id="@+id/listShifts"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:dividerHeight="6dp" />
+
+        <TextView android:text="Time-off" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
+
+        <ListView
+            android:id="@+id/listOffs"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:dividerHeight="6dp" />
+
+        <TextView android:text="Khách đặt" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"/>
+
+        <ListView
+            android:id="@+id/listBookings"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:dividerHeight="6dp" />
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,50 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:padding="12dp"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <TextView
+        android:text="Quản lý ca theo ngày (Owner)"
+        android:textStyle="bold"
+        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent" android:layout_height="wrap_content">
+        <EditText
+            android:id="@+id/etDate"
+            android:hint="Ngày (yyyy-MM-dd)"
+            android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="wrap_content"/>
+        <Button
+            android:id="@+id/btnLoad"
+            android:text="Xem"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnRegister"
+        android:text="Đăng ký ca"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView android:text="Sáng (08:00–12:00)"
+        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    <ListView
+        android:id="@+id/listMorning"
+        android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <TextView android:text="Chiều (13:30–17:00)"
+        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    <ListView
+        android:id="@+id/listAfternoon"
+        android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <TextView android:text="Tối (18:00–21:00)"
+        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    <ListView
+        android:id="@+id/listEvening"
+        android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1"/>
+</LinearLayout>

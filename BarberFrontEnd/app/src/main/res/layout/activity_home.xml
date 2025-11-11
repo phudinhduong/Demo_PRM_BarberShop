@@ -1,0 +1,17 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:padding="16dp"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <TextView android:id="@+id/tvWelcome" android:textStyle="bold"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Xin chào!"/>
+
+    <Button android:id="@+id/btnCustomer" android:text="Dành cho Khách (Đặt lịch)"
+        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+    <Button android:id="@+id/btnOwner" android:text="Dành cho Chủ tiệm (Quản trị)"
+        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+    <Button android:id="@+id/btnLogout" android:text="Đăng xuất"
+        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+</LinearLayout>

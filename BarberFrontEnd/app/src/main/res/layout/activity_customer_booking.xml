@@ -1,0 +1,53 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout
+        android:orientation="vertical" android:padding="12dp"
+        android:layout_width="match_parent" android:layout_height="wrap_content">
+
+        <TextView
+            android:text="Đặt lịch (Customer)"
+            android:textStyle="bold"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <EditText
+            android:id="@+id/etDate"
+            android:hint="Ngày (yyyy-MM-dd)"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <EditText
+            android:id="@+id/etTime"
+            android:hint="Giờ bắt đầu (HH:mm, vd 09:00)"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <TextView android:text="Dịch vụ" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        <Spinner
+            android:id="@+id/spService"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <TextView android:text="Thợ" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        <Spinner
+            android:id="@+id/spBarber"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <RadioGroup
+            android:id="@+id/rgMethod"
+            android:orientation="horizontal"
+            android:layout_width="match_parent" android:layout_height="wrap_content">
+            <RadioButton
+                android:id="@+id/rbCash"
+                android:checked="true"
+                android:text="CASH"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+            <RadioButton
+                android:id="@+id/rbVnpay"
+                android:text="VNPAY"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"/>
+        </RadioGroup>
+
+        <Button
+            android:id="@+id/btnBook"
+            android:text="ĐẶT LỊCH"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    </LinearLayout>
+</ScrollView>

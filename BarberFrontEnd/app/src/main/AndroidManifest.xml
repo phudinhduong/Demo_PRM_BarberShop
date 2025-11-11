@@ -1,0 +1,54 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    >
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <application
+        android:label="@string/app_name"
+        android:usesCleartextTraffic="true"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+
+        <!-- Auth -->
+        <activity android:name="barber.auth.RegisterActivity" />
+        <activity android:name="barber.auth.VerifyActivity" />
+
+        <activity
+            android:name="barber.auth.LoginActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <!-- (Tuỳ chọn) Điều hướng & các màn còn lại nếu đã tạo class dưới package barber -->
+        <activity android:name="barber.owner.OwnerHomeActivity"/>
+        <activity android:name="barber.owner.ManageServicesActivity"/>
+        <activity android:name="barber.owner.ManageBarbersActivity"/>
+        <activity android:name="barber.owner.OwnerDayActivity"/>
+        <activity android:name="barber.owner.ManageTimeOffsActivity"/>
+
+
+        <activity android:name="barber.customer.CustomerBookingActivity"/>
+        <activity android:name="barber.customer.CustomerHomeActivity"/>
+        <activity android:name="barber.customer.ServicesListActivity"/>
+        <activity android:name="barber.customer.BarbersListActivity"/>
+        <activity android:name="barber.customer.CustomerScheduleActivity"/>
+        <activity android:name="barber.customer.MyBookingsActivity"/>
+
+
+
+        <activity android:name="barber.barbers.BarberHomeActivity"/>
+        <activity android:name="barber.barbers.BarberScheduleActivity"/>
+        <activity android:name="barber.barbers.BarberScheduleByDayActivity"/>
+
+
+
+    </application>
+</manifest>

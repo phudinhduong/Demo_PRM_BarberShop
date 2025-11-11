@@ -1,0 +1,48 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3307/barber?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  jackson:
+    time-zone: UTC
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ddinhphu04@gmail.com
+    password: uilu jbqe hgmy rnjm
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+server:
+  port: 8080
+
+app:
+  jwt:
+    secret: "188ba37b57a9a99a6b611ecfd6b41d53669e3f3d3b1dcf08e9bb86f0e15e1f5c"
+    expiryMinutes: 120
+  otp:
+    length: 6
+    ttlMinutes: 10
+    maxAttempts: 5
+    cooldownSec: 60
+    maxResendPerHour: 3
+  mail:
+#    mode: CONSOLE   # CONSOLE in ra console ?? debug; khi c?n SMTP th� ??i
+    mode: SMTP
+    from: "Barber Booking <no-reply@Barber.com>"
+
+logging:
+  level:
+    org.springframework.mail: DEBUG
+
+vnpay:
+  tmnCode: K5V2184K
+  secretKey: TE4T7PVR02J9OBW21L5R6RIC1N7IVVVO
+  payUrl: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  returnUrl: http://10.0.2.2:8080/api/payment/vnpay-return
